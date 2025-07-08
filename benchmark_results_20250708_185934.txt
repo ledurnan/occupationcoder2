@@ -1,0 +1,12 @@
+SOCCoder Performance Benchmark Results
+==================================================
+Timestamp: 2025-07-08 18:59:34
+Initialization time: 2.6534s
+Average single record: 0.0018s
+DataFrame batch (3 records): 0.0059s
+
+Scaling Results:
+Size  1: 0.0013s, 769.91 rec/sec
+Size  3: 0.0063s, 478.02 rec/sec
+Size  9: 0.0171s, 525.26 rec/sec
+Size 30: 0.0513s, 584.26 rec/sec
