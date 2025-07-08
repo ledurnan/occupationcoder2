@@ -33,6 +33,26 @@ python tools/profile_per_record.py
 
 Shows the top 20 functions by cumulative time to help identify optimization opportunities.
 
+### profile_initialization.py
+Profiles the SOCCoder initialization process to identify startup bottlenecks.
+Useful for understanding and optimizing one-time setup costs.
+
+Usage:
+```bash
+cd /path/to/occupationcoder
+source venv/bin/activate
+python tools/profile_initialization.py
+```
+
+## Performance Notes
+
+The SOCCoder automatically creates a cache of cleaned job titles on first use to dramatically speed up subsequent initializations:
+
+- **First run**: ~2.8s (creates cache with user feedback)
+- **Subsequent runs**: ~0.5s (loads from cache)
+
+The cache is automatically created in `occupationcoder/dictionaries/titles_cleaned_cache.pkl` and excluded from version control for licensing reasons.
+
 ## Note
 These tools require the virtual environment to be activated and all dependencies installed.
 They use the test data from `tests/test_vacancies.csv` for consistent benchmarking.

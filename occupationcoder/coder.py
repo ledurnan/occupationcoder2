@@ -5,6 +5,7 @@ import os
 import json
 import sys
 import time
+import pickle
 
 import pandas as pd
 
@@ -29,15 +30,34 @@ output_dir = os.path.join(script_dir, 'outputs')
 class SOCCoder:
     def __init__(self, lookup_dir=lookup_dir):
 
-        # Load up the titles lists, ensure codes are loaded as strings...
-        with open(os.path.join(lookup_dir, 'titles_minor_group_ons.json'),
-                  'r') as infile:
-            self.titles_mg = json.load(infile, parse_int=str)
+        # Try to load cleaned titles from cache first (major speed optimization)
+        cache_file = os.path.join(lookup_dir, 'titles_cleaned_cache.pkl')
+        if os.path.exists(cache_file):
+            # Load from cache
+            with open(cache_file, 'rb') as f:
+                self.titles_mg = pickle.load(f)
+        else:
+            # Cache doesn't exist - create it automatically on first use
+            print("Creating titles cache for faster future startups...")
+            
+            # Load and clean titles (this will be slow the first time)
+            with open(os.path.join(lookup_dir, 'titles_minor_group_ons.json'),
+                      'r') as infile:
+                titles_mg_raw = json.load(infile, parse_int=str)
 
-        # Clean the job titles lists with the same code as for records
-        for SOC_code in self.titles_mg.keys():
-            self.titles_mg[SOC_code] = [simple_clean(title, known_only=False)
-                                        for title in self.titles_mg[SOC_code]]
+            # Clean the job titles lists with the same code as for records
+            self.titles_mg = {}
+            for SOC_code, titles in titles_mg_raw.items():
+                self.titles_mg[SOC_code] = [simple_clean(title, known_only=False)
+                                            for title in titles]
+
+            # Save cache for next time
+            try:
+                with open(cache_file, 'wb') as f:
+                    pickle.dump(self.titles_mg, f, protocol=pickle.HIGHEST_PROTOCOL)
+                print(f"Cache created at {cache_file} - future startups will be much faster!")
+            except (IOError, OSError) as e:
+                print(f"Warning: Could not create cache file ({e}). Performance will be slower on future startups.")
 
         # Build reverse lookup for exact matches (optimization)
         self._exact_match_lookup = {}
