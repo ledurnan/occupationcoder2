@@ -231,7 +231,7 @@ class SOCCoder:
 # use multiprocessing in Windows.
 if __name__ == '__main__':
     freeze_support()
-    
+
     # Read command line inputs
     inFile = sys.argv[1]
     df = pd.read_csv(inFile)

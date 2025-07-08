@@ -46,7 +46,7 @@ def simple_clean(text: str, known_only=True):
                       (default True)
     """
     # Handle unexpected datatypes
-    if type(text) != str:
+    if not isinstance(text, str):
         raise TypeError("simple_clean expects a string")
 
     text = re.sub(r'<.*?>', " ", text)  # Clean out any HTML tags
