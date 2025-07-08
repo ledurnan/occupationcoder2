@@ -21,6 +21,11 @@ KEEP_AS_IS = ['sales', 'years', 'goods', 'operations', 'systems',
               'lettings', 'claims', 'accounts', 'relations',
               'complaints', 'services']
 
+# Cache compiled regex patterns for performance
+_HTML_TAG_RE = re.compile(r'<.*?>')
+_NON_ALPHA_RE = re.compile(r"[^a-z ]")
+_WHITESPACE_RE = re.compile(r' +')
+
 with open(os.path.join(lookup_dir, 'known_words_dict.json'), 'r') as infile:
     known_words_dict = json.load(infile)
 
@@ -49,9 +54,10 @@ def simple_clean(text: str, known_only=True):
     if not isinstance(text, str):
         raise TypeError("simple_clean expects a string")
 
-    text = re.sub(r'<.*?>', " ", text)  # Clean out any HTML tags
-    text = re.sub(r"[^a-z ]", " ", text.lower())  # Keep only letters & spaces
-    text = re.sub(' +', ' ', text).strip()   # Remove excess whitespace
+    # Use cached compiled regex patterns for better performance
+    text = _HTML_TAG_RE.sub(" ", text)  # Clean out any HTML tags
+    text = _NON_ALPHA_RE.sub(" ", text.lower())  # Keep only letters & spaces
+    text = _WHITESPACE_RE.sub(' ', text).strip()   # Remove excess whitespace
 
     # Lemmatise tokens
     tokens = lemmatize(text)
@@ -62,7 +68,7 @@ def simple_clean(text: str, known_only=True):
     # Filter out words not present in the vocabulary we're matching to
     if known_only:
         tokens = [token for token in tokens
-                  if token in list(known_words_dict.keys())]
+                  if token in known_words_dict]
 
     # Filter out stopwords
     tokens = [token for token in tokens if token not in STOPWORDS]

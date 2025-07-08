@@ -39,6 +39,15 @@ class SOCCoder:
             self.titles_mg[SOC_code] = [simple_clean(title, known_only=False)
                                         for title in self.titles_mg[SOC_code]]
 
+        # Build reverse lookup for exact matches (optimization)
+        self._exact_match_lookup = {}
+        for SOC_code, titles in self.titles_mg.items():
+            for title in titles:
+                # Store first 3 words as key for exact matching
+                key = ' '.join(title.split()[:3])
+                if key not in self._exact_match_lookup:
+                    self._exact_match_lookup[key] = SOC_code
+
         self.mg_buckets = pd.read_json(os.path.join(
                                           lookup_dir,
                                           'mg_buckets_ons_df_processed.json'))\
@@ -62,15 +71,7 @@ class SOCCoder:
     def get_exact_match(self, title: str):
         """ If exists, finds exact match to a job title's first three words """
         title = ' '.join(title.split()[:3])
-        result = None
-        keys = self.titles_mg.keys()
-
-        # For each SOC code:
-        for k in keys:
-            # Check if exact job title is in its list of job titles
-            if title in self.titles_mg[k]:
-                result = k
-        return result
+        return self._exact_match_lookup.get(title)
 
     def get_tfidf_match(self, text, top_n=5):
         """ Finds the closest top_n matching SOC descriptions to some text """
@@ -135,10 +136,18 @@ class SOCCoder:
         """
         clean_title = simple_clean(title)
 
-        # Try to code using exact title match (and save a lot of computation
+        # Try to code using exact title match (and save a lot of computation)
         match = self.get_exact_match(clean_title)
         if match:
             return match
+
+        # If no exact match and no additional context, try partial title matches
+        if not sector and not description:
+            # For single word titles, try exact match on just that word
+            if len(clean_title.split()) == 1:
+                match = self.get_exact_match(clean_title)
+                if match:
+                    return match
 
         # Gather all text data
         all_text = clean_title
