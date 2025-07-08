@@ -6,6 +6,8 @@ import json
 import sys
 import time
 import pickle
+import tempfile
+from pathlib import Path
 
 import pandas as pd
 
@@ -27,11 +29,33 @@ lookup_dir = os.path.join(script_dir, 'dictionaries')
 output_dir = os.path.join(script_dir, 'outputs')
 
 
+def get_cache_dir():
+    """Get a platform-appropriate cache directory for storing performance cache files."""
+    # Try XDG cache directory first (Linux/Unix standard)
+    if 'XDG_CACHE_HOME' in os.environ:
+        cache_base = os.environ['XDG_CACHE_HOME']
+    else:
+        # Fall back to user home directory
+        home = Path.home()
+        if os.name == 'nt':  # Windows
+            cache_base = os.environ.get('LOCALAPPDATA', home / 'AppData' / 'Local')
+        else:  # Unix-like systems
+            cache_base = home / '.cache'
+    
+    # Create occupationcoder subdirectory
+    cache_dir = Path(cache_base) / 'occupationcoder'
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return str(cache_dir)
+
+
 class SOCCoder:
     def __init__(self, lookup_dir=lookup_dir):
 
         # Try to load cleaned titles from cache first (major speed optimization)
-        cache_file = os.path.join(lookup_dir, 'titles_cleaned_cache.pkl')
+        # Use user cache directory instead of package directory for write permissions
+        cache_dir = get_cache_dir()
+        cache_file = os.path.join(cache_dir, 'titles_cleaned_cache.pkl')
+        
         if os.path.exists(cache_file):
             # Load from cache
             with open(cache_file, 'rb') as f:

@@ -135,8 +135,5 @@ venv_*/
 # Development tools output
 benchmark_results_*.txt
 
-# Generated cache files (created on first use)
-occupationcoder/dictionaries/titles_cleaned_cache.pkl
-
 # Processed job data
 occupationcoder/outputs/processed_jobs.csv
